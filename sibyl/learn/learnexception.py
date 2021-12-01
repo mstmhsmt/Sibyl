@@ -24,7 +24,7 @@ class ReturnPointerException(LearnException):
 class ReturnValueException(LearnException):
 
     def __init__(self):
-        super(ReturnPointerException, self).__init__(
+        super(ReturnValueException, self).__init__(
             "return value is incorrect after replaying snapshot, the function might return nthing")
 
     def repr_class_name(self):

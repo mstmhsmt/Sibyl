@@ -20,7 +20,8 @@
 import time
 import signal
 import logging
-from miasm2.analysis.binary import Container, ContainerPE, ContainerELF
+from miasm.analysis.binary import Container, ContainerPE, ContainerELF
+from miasm.core.locationdb import LocationDB
 
 from sibyl.commons import init_logger, TimeoutException, END_ADDR
 from sibyl.engine import QEMUEngine, MiasmEngine
@@ -29,7 +30,7 @@ from sibyl.config import config
 class TestLauncher(object):
     "Launch tests for a function and report matching candidates"
 
-    def __init__(self, filename, machine, abicls, tests_cls, engine_name,
+    def __init__(self, filename_or_content, machine, abicls, tests_cls, engine_name,
                  map_addr=0):
 
         # Logging facilities
@@ -40,7 +41,13 @@ class TestLauncher(object):
         self.init_engine(engine_name)
 
         # Init and snapshot VM
-        self.load_vm(filename, map_addr)
+        if isinstance(filename_or_content, str):
+            self.load_vm(filename_or_content, map_addr)
+        elif isinstance(filename_or_content, bytes):
+            self.load_vm_bytes(filename_or_content, map_addr)
+        else:
+            raise TypeError('The first arg should be str or bytes')
+
         self.init_stub()
         self.snapshot = self.engine.take_snapshot()
 
@@ -57,18 +64,18 @@ class TestLauncher(object):
         # Get stubs' implementation
         context = {}
         for fpath in config.stubs:
-            execfile(fpath, context)
+            exec(compile(open(fpath, "rb").read(), fpath, 'exec'), context)
         if not context:
             return
 
         libs = None
         if isinstance(self.ctr, ContainerPE):
-            from miasm2.jitter.loader.pe import preload_pe, libimp_pe
+            from miasm.jitter.loader.pe import preload_pe, libimp_pe
             libs = libimp_pe()
             preload_pe(self.jitter.vm, self.ctr.executable, libs)
 
         elif isinstance(self.ctr, ContainerELF):
-            from miasm2.jitter.loader.elf import preload_elf, libimp_elf
+            from miasm.jitter.loader.elf import preload_elf, libimp_elf
             libs = libimp_elf()
             preload_elf(self.jitter.vm, self.ctr.executable, libs)
 
@@ -85,8 +92,13 @@ class TestLauncher(object):
         self.tests = tests
 
     def load_vm(self, filename, map_addr):
-        self.ctr = Container.from_stream(open(filename), vm=self.jitter.vm,
+        self.ctr = Container.from_stream(open(filename, 'rb'), LocationDB(), vm=self.jitter.vm,
                                          addr=map_addr)
+        self.jitter.cpu.init_regs()
+        self.jitter.init_stack()
+
+    def load_vm_bytes(self, bs, map_addr):
+        self.ctr = Container.from_string(bs, LocationDB(), vm=self.jitter.vm, addr=map_addr)
         self.jitter.cpu.init_regs()
         self.jitter.init_stack()
 
@@ -98,7 +110,7 @@ class TestLauncher(object):
         self.jitter = self.engine.jitter
 
     def init_abi(self, abicls):
-        ira = self.machine.ira()
+        ira = self.machine.lifter_model_call(LocationDB())
         self.abi = abicls(self.jitter, ira)
 
     def launch_tests(self, test, address, timeout_seconds=0):
@@ -150,6 +162,7 @@ class TestLauncher(object):
 
         self.engine.prepare_run()
         for test in self.tests:
+            #print('!!! [testlauncher.run] {}'.format(test))
             self.launch_tests(test, address, *args, **kwargs)
 
         self.logger.info("Total time: %.4f seconds" % (time.time() - starttime))

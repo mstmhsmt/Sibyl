@@ -56,7 +56,7 @@ class TestA64l(Test):
     def check(self):
         result = self._get_result()
         return all([result == self.value,
-                    self._ensure_mem(self.my_addr, self.my_string)])
+                    self._ensure_mem(self.my_addr, self.my_string.encode('utf-8'))])
 
     # Properties
     func = "a64l"
@@ -76,7 +76,7 @@ class TestAtoi(Test):
     def my_check(self, string):
         result = self._get_result()
         return all([result == int(string.split(".")[0]),
-                    self._ensure_mem(self.my_addr, string)])
+                    self._ensure_mem(self.my_addr, string.encode('utf-8'))])
 
     # Test1
     def init1(self):

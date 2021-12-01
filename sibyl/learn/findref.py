@@ -39,11 +39,11 @@ class ExtractRef(object):
 
     def use_snapshot(self, jitter):
         '''Initilize the VM with the snapshot informations'''
-        for reg, value in self.snapshot.input_reg.iteritems():
+        for reg, value in self.snapshot.input_reg.items():
             setattr(jitter.cpu, reg, value)
 
         # Set values for input memory
-        for addr, mem in self.snapshot.in_memory.iteritems():
+        for addr, mem in self.snapshot.in_memory.items():
             assert mem.access != 0
             if not jitter.vm.is_mapped(addr, mem.size):
                 jitter.vm.add_memory_page(addr, mem.access, mem.data)
@@ -60,12 +60,12 @@ class ExtractRef(object):
         '''Compare the expected result with the real one to determine if the function is recognize or not'''
         func_found = True
 
-        for reg, value in self.snapshot.output_reg.iteritems():
+        for reg, value in self.snapshot.output_reg.items():
             if value != getattr(jitter.cpu, reg):
                 self.replayexception += ["output register %s wrong : %i expected, %i found" % (reg, value, getattr(jitter.cpu, reg))]
                 func_found = False
 
-        for addr, mem in self.snapshot.out_memory.iteritems():
+        for addr, mem in self.snapshot.out_memory.items():
             self.logger.debug("Check @%s, %s bytes: %r", hex(addr), hex(mem.size), mem.data[:0x10])
             if mem.data != jitter.vm.get_mem(addr, mem.size):
                 self.replayexception += ["output memory wrong at 0x%x: %s expected, %s found" % (addr + offset, repr(mem.data), repr(jitter.vm.get_mem(addr + offset, mem.size)))]
@@ -134,7 +134,7 @@ class ExtractRef(object):
                         addr_expr = expr.ptr
                         new_expr = []
                         consider = False
-                        for offset in xrange(expr.size/8):
+                        for offset in range(expr.size/8):
                             sub_expr = m2_expr.ExprMem(self.symb.expr_simp(addr_expr + m2_expr.ExprInt(offset, size=addr_expr.size)),
                                                        8)
                             if not self.is_pointer(sub_expr):
@@ -184,16 +184,16 @@ class ExtractRef(object):
         if cur_addr == 0x1337BEEF or cur_addr == self.return_addr:
             # End reached
             if self.logger.isEnabledFor(logging.DEBUG):
-                print "In:"
+                print("In:")
                 for x in self.memories_read:
-                    print "\t%s (%s)" % (x,
+                    print("\t%s (%s)" % (x,
                                          self.c_handler.expr_to_c(x),
-                    )
-                print "Out:"
+                    ))
+                print("Out:")
                 for x in self.memories_write:
-                    print "\t%s (%s)" % (x,
+                    print("\t%s (%s)" % (x,
                                          self.c_handler.expr_to_c(x),
-                    )
+                    ))
             return True
 
         # Update state
@@ -230,9 +230,9 @@ class ExtractRef(object):
         ## Load the memory as ExprMem
         self.symb.func_read = None
         self.symb.func_write = None
-        for base_addr, mem_segment in jitter.vm.get_all_memory().iteritems():
+        for base_addr, mem_segment in jitter.vm.get_all_memory().items():
             # Split into 8 bytes chunk for get_mem_overlapping
-            for start in xrange(0, mem_segment["size"], 8):
+            for start in range(0, mem_segment["size"], 8):
                 expr_mem = m2_expr.ExprMem(m2_expr.ExprInt(base_addr + start,
                                                            size=64),
                                            size=8*min(8, mem_segment["size"] - start))
@@ -308,12 +308,12 @@ class ExtractRef(object):
         self.symb.symbols = saved_symbols
 
         if self.logger.isEnabledFor(logging.DEBUG):
-            print "In:"
-            print memory_in
-            print "Out:"
-            print memory_out
-            print "Final value:"
-            print output_value
+            print("In:")
+            print(memory_in)
+            print("Out:")
+            print(memory_out)
+            print("Final value:")
+            print(output_value)
 
         self.snapshot.memory_in = AssignBlock(memory_in)
         self.snapshot.memory_out = AssignBlock(memory_out)

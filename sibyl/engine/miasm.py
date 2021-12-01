@@ -58,7 +58,7 @@ class MiasmEngine(Engine):
         if memory:
             self.jitter.vm.reset_memory_page_pool()
             self.jitter.vm.reset_code_bloc_pool()
-            for addr, metadata in self.vm_mem.iteritems():
+            for addr, metadata in self.vm_mem.items():
                 self.jitter.vm.add_memory_page(addr,
                                                metadata["access"],
                                                metadata["data"])

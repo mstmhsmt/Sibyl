@@ -5,8 +5,8 @@ try:
 except ImportError:
     pycparser = None
 else:
-    from miasm2.core.ctypesmngr import c_to_ast, CTypeFunc
-    from miasm2.core.objc import ObjCPtr, ObjCArray
+    from miasm.core.ctypesmngr import c_to_ast, CTypeFunc
+    from miasm.core.objc import ObjCPtr, ObjCArray
 
 def init_logger(name):
     logger = logging.getLogger(name)
@@ -15,7 +15,7 @@ def init_logger(name):
     log_format = "%(levelname)-5s: %(message)s"
     console_handler.setFormatter(logging.Formatter(log_format))
     logger.addHandler(console_handler)
-
+    #logger.setLevel(logging.INFO)
     logger.setLevel(logging.ERROR)
     return logger
 
@@ -42,8 +42,8 @@ def print_table(ligs, title=True, separator='|', level=0, align=""):
 
     for i, lig in enumerate(ligs):
         if i == 1 and title:
-            print "%s%s" % (tab, "-" * len(fmt.format(*lig)))
-        print "%s%s" % (tab, fmt.format(*lig))
+            print("%s%s" % (tab, "-" * len(fmt.format(*lig))))
+        print("%s%s" % (tab, fmt.format(*lig)))
 
 class HeaderFile(object):
     """Abstract representation of a Header file"""
@@ -51,7 +51,7 @@ class HeaderFile(object):
     def __init__(self, header_data, ctype_manager):
         """Parse @header_data to fill @ctype_manager
         @header_data: str of a C-like header file
-        @ctype_manager: miasm2.core.objc.CTypesManager instance"""
+        @ctype_manager: miasm.core.objc.CTypesManager instance"""
         self.data = header_data
         self.ctype_manager = ctype_manager
 
@@ -106,13 +106,13 @@ class FuncPrototype(object):
     def __init__(self, func_name, func_type, *args, **kwargs):
         """Init a prototype for @func_type @func_name(@kwargs (name -> type) )
         """
-        self.func_name = func_name
+        self.__name__ = func_name
         self.func_type = func_type
         self.args = kwargs
         self.args_order = args
 
     def __str__(self):
         return "%s %s(%s)" % (self.func_type,
-                              self.func_name,
+                              self.__name__,
                               ", ".join("%s %s" % (self.args[name], name)
                                         for name in self.args_order))

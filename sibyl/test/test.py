@@ -16,17 +16,18 @@
 
 
 import random
-from miasm2.jitter.csts import PAGE_READ, PAGE_WRITE
-from miasm2.expression.modint import mod_size2int
-from miasm2.expression.simplifications import expr_simp
+import math
+from miasm.jitter.csts import PAGE_READ, PAGE_WRITE
+from miasm.core.modint import mod_size2int
+from miasm.expression.simplifications import expr_simp
 try:
     import pycparser
 except ImportError:
     pycparser = None
 else:
-    from miasm2.core.objc import CTypesManagerNotPacked, CHandler
-    from miasm2.core.ctypesmngr import CAstTypes
-    from miasm2.arch.x86.ctype import CTypeAMD64_unk
+    from miasm.core.objc import CTypesManagerNotPacked, CHandler
+    from miasm.core.ctypesmngr import CAstTypes
+    from miasm.arch.x86.ctype import CTypeAMD64_unk
 
 from sibyl.commons import HeaderFile
 
@@ -87,8 +88,7 @@ class Test(object):
             right |= PAGE_WRITE
 
         # Memory alignement
-        mem += "".join([chr(random.randint(0, 255)) \
-                            for _ in xrange((16 - len(mem) % 16))])
+        mem += bytes([random.randint(0, 255) for _ in range((16 - len(mem) % 16))])
 
         self.jitter.vm.add_memory_page(self.alloc_pool, right, mem)
         to_ret = self.alloc_pool
@@ -97,11 +97,11 @@ class Test(object):
         return to_ret
 
     def _alloc_mem(self, size, read=True, write=False):
-        mem = "".join([chr(random.randint(0, 255)) for _ in xrange(size)])
+        mem = bytes([random.randint(0, 255) for _ in range(size)])
         return self.__alloc_mem(mem, read=read, write=write)
 
     def _alloc_string(self, string, read=True, write=False):
-        return self.__alloc_mem(string + "\x00", read=read, write=write)
+        return self.__alloc_mem(string.encode('utf-8') + b"\x00", read=read, write=write)
 
     def _alloc_pointer(self, pointer, read=True, write=False):
         pointer_size = self.abi.ira.sizeof_pointer()
@@ -113,7 +113,7 @@ class Test(object):
         self.jitter.vm.set_mem(addr, element)
 
     def _write_string(self, addr, element):
-        self._write_mem(addr, element + "\x00")
+        self._write_mem(addr, (element + "\x00").encode('utf-8'))
 
     def _add_arg(self, number, element):
         self.abi.add_arg(number, element)
@@ -146,7 +146,7 @@ class Test(object):
         return mod_size2int[int_size](element)
 
     def _memread_pointer(self, addr):
-        pointer_size = self.abi.ira.sizeof_pointer() / 8
+        pointer_size = math.floor(self.abi.ira.sizeof_pointer() / 8)
         try:
             element = self.jitter.vm.get_mem(addr, pointer_size)
         except RuntimeError:
@@ -155,18 +155,25 @@ class Test(object):
 
     @staticmethod
     def pack(element, size):
-        out = ""
+        orig_element = element
+        out = []
         while element != 0:
-            out += chr(element % 0x100)
+            #print('!!! [test.Test.pack] {}'.format(element % 0x100))
+            out.append(element % 0x100)
             element >>= 8
-        if len(out) > size / 8:
+        if len(out) > int(size / 8):
             raise ValueError("To big to be packed")
-        out = out + "\x00" * ((size / 8) - len(out))
-        return out
+        for _ in range(int(size / 8) - len(out)):
+            out.append(0)
+        out_ = bytes(out)
+        #print('!!! [test.Test.pack] 0x{:x}({}) -> {}'.format(orig_element, size, out_.hex()))
+        return out_
 
     @staticmethod
     def unpack(element):
-        return int(element[::-1].encode("hex"), 16)
+        i = int.from_bytes(element, byteorder='little', signed=False)
+        #print('!!! [test.Test.unpack] {} -> 0x{:x}'.format(element.hex(), i))
+        return i
 
 
 class TestSet(object):

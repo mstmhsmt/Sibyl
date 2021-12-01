@@ -47,10 +47,10 @@ class Tracer(object):
         stdout = stdout.strip()
         stderr = stderr.strip()
         if stdout:
-            print stdout
+            print(stdout)
 
         if stderr:
-            print "STDERR is not empty"
-            print stderr
+            print("STDERR is not empty")
+            print(stderr)
 
         return stdout

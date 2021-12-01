@@ -19,8 +19,8 @@ import json
 import sys
 from collections import namedtuple
 
-from miasm2.analysis.machine import Machine
-from miasm2.analysis.binary import Container
+from miasm.analysis.machine import Machine
+from miasm.analysis.binary import Container
 
 from sibyl.config import config
 from sibyl.testlauncher import TestLauncher
@@ -65,7 +65,7 @@ class ActionFind(Action):
         (["-b", "--abi"], {"help": "ABI to use",
                            "choices": [x.__name__ for x in ABIS]}),
         (["-t", "--tests"], {"help": "Tests to run (default is all)",
-                             "choices": config.available_tests.keys(),
+                             "choices": list(config.available_tests.keys()),
                              "default": [],
                              "action": "append"}),
         (["-v", "--verbose"], {"help": "Verbose mode (use multiple time to " \
@@ -110,11 +110,14 @@ class ActionFind(Action):
         # Signal to master the end
         msg_queue.put(None)
 
+
     def run(self):
         """Launch search"""
 
         # Import multiprocessing only when required
-        from multiprocessing import cpu_count, Queue, Process
+        from multiprocessing import cpu_count, Queue, Process, set_start_method
+
+        set_start_method('fork')
 
         # Parse args
         self.map_addr = int(self.args.mapping_base, 0)
@@ -127,16 +130,16 @@ class ActionFind(Action):
         if self.args.architecture:
             architecture = self.args.architecture
         else:
-            with open(self.args.filename) as fdesc:
+            with open(self.args.filename, 'rb') as fdesc:
                 architecture = ArchHeuristic(fdesc).guess()
             if not architecture:
                 raise ValueError("Unable to recognize the architecture, please specify it")
             if self.args.verbose > 0:
-                print "Guessed architecture: %s" % architecture
+                print("Guessed architecture: %s" % architecture)
 
         self.machine = Machine(architecture)
         if not self.args.address:
-            print "No function address provided. Use 'sibyl func' to discover addresses"
+            print("No function address provided. Use 'sibyl func' to discover addresses")
             exit(-1)
         addresses = []
         for address in self.args.address:
@@ -150,7 +153,7 @@ class ActionFind(Action):
                 # File
                 addresses = [int(addr, 0) for addr in open(address)]
         if self.args.verbose > 0:
-            print "Found %d addresses" % len(addresses)
+            print("Found %d addresses" % len(addresses))
 
 
         # Select ABI
@@ -160,8 +163,8 @@ class ActionFind(Action):
             if not candidates:
                 raise ValueError("No ABI for architecture %s" % architecture)
             if len(candidates) > 1:
-                print "Please specify the ABI:"
-                print "\t" + "\n\t".join(cand.__name__ for cand in candidates)
+                print("Please specify the ABI:")
+                print("\t" + "\n\t".join(cand.__name__ for cand in candidates))
                 exit(0)
             abicls = candidates.pop()
         else:
@@ -174,11 +177,20 @@ class ActionFind(Action):
 
         # Select Test set
         self.tests = []
-        for tname, tcases in config.available_tests.iteritems():
+        for tname, tcases in config.available_tests.items():
             if not self.args.tests or tname in self.args.tests:
                 self.tests += tcases
         if self.args.verbose > 0:
-            print "Found %d test cases" % len(self.tests)
+            print("Found %d test cases" % len(self.tests))
+
+        # Single process check
+        # for address in addresses:
+        #     print('!!! 0x{:x}'.format(address))
+        #     tl = TestLauncher(self.args.filename, self.machine, self.abicls,
+        #                       self.tests, self.args.jitter, self.map_addr)
+        #     possible_funcs = tl.run(address, timeout_seconds=self.args.timeout)
+        #     print(address, possible_funcs)
+        # return
 
         # Prepare multiprocess
         cpu_c = cpu_count()
@@ -191,15 +203,14 @@ class ActionFind(Action):
             addr_queue.put(address)
 
         # Add poison pill
-        for _ in xrange(cpu_c):
+        for _ in range(cpu_c):
             addr_queue.put(None)
 
         # Launch workers
-        for _ in xrange(cpu_c):
+        for _ in range(cpu_c):
             p = Process(target=self.do_test, args=(addr_queue, msg_queue))
             processes.append(p)
             p.start()
-        addr_queue.close()
 
         # Get results
         nb_poison = 0
@@ -222,38 +233,39 @@ class ActionFind(Action):
                 prefix = ""
                 if self.args.verbose > 0:
                     prefix = "\r"
-                print prefix + "0x%08x : %s" % (msg.address, ",".join(msg.results))
+                print(prefix + "0x%08x : %s" % (msg.address, ",".join(msg.results)))
 
         # Clean output if needed
         if self.args.verbose > 0:
-            print ""
+            print("")
 
         # End connexions
         msg_queue.close()
         msg_queue.join_thread()
-
-        addr_queue.join_thread()
         for p in processes:
             p.join()
 
         if not addr_queue.empty():
             raise RuntimeError("An error occured: queue is not empty")
 
+        addr_queue.close()
+        addr_queue.join_thread()
+
         # Print final results
         if self.args.output_format == "JSON":
             # Expand results to always have the same key, and address as int
-            print json.dumps({"information": {"total_count": len(addresses),
+            print(json.dumps({"information": {"total_count": len(addresses),
                                               "test_cases": len(self.tests)},
                               "results": [{"address": addr, "functions": result}
-                                          for addr, result in results.iteritems()],
-            })
+                                          for addr, result in results.items()],
+            }))
         elif self.args.output_format == "human" and self.args.verbose > 0:
             # Summarize results
             title = ["Address", "Candidates"]
             ligs = [title]
 
             ligs += [["0x%08x" % addr, ",".join(result)]
-                     for addr, result in sorted(results.iteritems(),
+                     for addr, result in sorted(iter(results.items()),
                                                 key=lambda x: x[0])
                      if result]
             print_table(ligs, separator="| ")

@@ -68,7 +68,7 @@ def handle_found(addr, candidates):
     @addr: address of the function analyzed
     @candidates: list of string of possible matched functions
     """
-    print "Found %s at %s" % (",".join(candidates), hex(addr))
+    print("Found %s at %s" % (",".join(candidates), hex(addr)))
     idc.SetFunctionCmt(addr, "[Sibyl] %s?" % ",".join(candidates), False)
 
 
@@ -105,7 +105,7 @@ def launch_on_funcs(architecture, abi, funcs, test_set, map_addr=None,
         add_map = ["-m", hex(map_addr)]
 
     # Launch identification
-    print "Launch identification on %d function(s)" % nb_func
+    print("Launch identification on %d function(s)" % nb_func)
     options = ["-a", architecture, "-b", abi, "-o", "JSON"]
     for test_name in test_set:
         options += ["-t", test_name]
@@ -114,7 +114,7 @@ def launch_on_funcs(architecture, abi, funcs, test_set, map_addr=None,
     options += add_map
     res = {}
 
-    for i in xrange(0, len(funcs), buf_size):
+    for i in range(0, len(funcs), buf_size):
         # Build command line
         addresses = funcs[i:i + buf_size]
         command_line = [identify_binary, "find"]
@@ -133,11 +133,11 @@ def launch_on_funcs(architecture, abi, funcs, test_set, map_addr=None,
         maxi = min(i + buf_size, len(funcs))
         estimatedtime = (curtime * nb_func) / maxi
         remaintime = estimatedtime - curtime
-        print "Current: %.02f%% (sub_%s)| Estimated time remaining: %.02fs" % (((100. /nb_func) * maxi),
+        print("Current: %.02f%% (sub_%s)| Estimated time remaining: %.02fs" % (((100. /nb_func) * maxi),
                                                                                      addresses[-1],
-                                                                                     remaintime)
+                                                                                     remaintime))
 
-    print "Finished ! Found %d candidates in %.02fs" % (nb_found, time.time() - starttime)
+    print("Finished ! Found %d candidates in %.02fs" % (nb_found, time.time() - starttime))
     return res
 
 
@@ -247,7 +247,7 @@ Testsets to use:
                     name = "arml"
 
         else:
-            print repr(processor_name)
+            print(repr(processor_name))
             raise ValueError("Unknown corresponding architecture")
 
         return name
@@ -317,5 +317,5 @@ if __name__ == "__main__":
                                 settings.abi,
                                 settings.funcs,
                                 settings.tests)
-    print "Results are also available in 'sibyl_res'"
+    print("Results are also available in 'sibyl_res'")
 

@@ -102,7 +102,7 @@ class TestCreator(object):
             ignored = 0
         elif config.prune_strategy == "keep":
             # Remove all snapshot but one or a few (according to config)
-            for i, snapshot in xrange(self.trace):
+            for i, snapshot in range(self.trace):
                 trace.append(snapshot)
                 if len(trace) >= config.prune_keep:
                     break

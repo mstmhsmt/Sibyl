@@ -34,7 +34,7 @@ for ((offset, segment), value, accessRight) in allocList:
 refUpdateTemplate = '''
 # Reference update
 refs = {refs}
-for (offset, seg), ref in refs.iteritems():
+for (offset, seg), ref in refs.items():
     newAddr = offset + self.segBase{n}[seg]
     for (writenOffset, writenSeg) in ref:
         writenAddr = writenOffset + self.segBase{n}[writenSeg]
@@ -72,7 +72,7 @@ addrList = {addrList}
 
 refs = {refs}
 ptrSize = self.abi.ira.sizeof_pointer()
-for (offsetRef, segRef), ref in refs.iteritems():
+for (offsetRef, segRef), ref in refs.items():
     newData = self.pack(offsetRef + self.segBase{n}[segRef], ptrSize)
     for (writenOffset, writenSeg) in ref:
         for i, ((offsetA, segA), data) in enumerate(addrList):
@@ -115,10 +115,10 @@ class PythonGenerator(Generator):
         self.printer.add_block(TPL.imports)
         self.printer.add_empty_line()
 
-        self.printer.add_block(TPL.classDef.format(funcname=self.prototype.func_name))
+        self.printer.add_block(TPL.classDef.format(funcname=self.prototype.__name__))
         self.printer.add_empty_line()
 
-        self.printer.add_block(TPL.classAttrib.format(funcname=self.prototype.func_name,
+        self.printer.add_block(TPL.classAttrib.format(funcname=self.prototype.__name__,
                                                       header=self.headerfile.data.strip()))
         self.printer.add_empty_line()
         self.printer.add_lvl()
@@ -126,7 +126,7 @@ class PythonGenerator(Generator):
         if self.learnexceptiontext:
             printedException = ('print "' + "\\n".join(["REPLAY ERROR: " + e for e in self.learnexceptiontext]) + '"')
 
-            self.printer.add_block(initDefTemplate.format(funcname=self.prototype.func_name, printedException=printedException))
+            self.printer.add_block(initDefTemplate.format(funcname=self.prototype.__name__, printedException=printedException))
 
         for i, snapshot in enumerate(self.trace, 1):
             self.printer.add_empty_line()
@@ -137,13 +137,13 @@ class PythonGenerator(Generator):
 
         self.printer.add_empty_line()
         testList = "&".join([testListElem.format(i)
-                             for i in xrange(1, len(self.trace) + 1)])
+                             for i in range(1, len(self.trace) + 1)])
         self.printer.add_block(TPL.classTestList.format(testList=testList))
 
         self.printer.add_empty_line()
         self.printer.sub_lvl()
         self.printer.add_empty_line()
-        self.printer.add_block(TPL.registerTest.format(funcname=self.prototype.func_name))
+        self.printer.add_block(TPL.registerTest.format(funcname=self.prototype.__name__))
 
         return self.printer.dump()
 
@@ -169,10 +169,10 @@ class PythonGenerator(Generator):
         # First, identify involved fields
         fields = set()
         atomic_values = {}
-        for dst, value in memories.iteritems():
+        for dst, value in memories.items():
             assert isinstance(dst, ExprMem)
             addr_expr = dst.ptr
-            for i in xrange(dst.size / 8):
+            for i in range(dst.size / 8):
                 # Split in atomic access
                 offset = ExprInt(i, addr_expr.size)
                 sub_addr_expr = expr_simp(addr_expr + offset)
@@ -203,7 +203,7 @@ class PythonGenerator(Generator):
             assert isinstance(dst, ExprMem)
             accumulator = []
             addr_expr = dst.ptr
-            for i in reversed(xrange(dst.size / 8)):
+            for i in reversed(range(dst.size / 8)):
                 # Split in atomic access
                 offset = ExprInt(i, addr_expr.size)
                 sub_addr_expr = expr_simp(addr_expr + offset)
@@ -248,7 +248,7 @@ class PythonGenerator(Generator):
         ## First, resolve common bases
         bases_to_C = {} # expr -> C-like
         to_resolve = set()
-        for expr in memory_in.keys() + memory_out.keys():
+        for expr in list(memory_in.keys()) + list(memory_out.keys()):
             to_resolve.update(expr.ptr.get_r(mem_read=True))
 
         fixed = {}
@@ -326,7 +326,7 @@ class PythonGenerator(Generator):
                     max_per_base[base] = info["Clike"]
 
         # Reserve memory for each bases
-        for expr, Clike in bases_to_C.iteritems():
+        for expr, Clike in bases_to_C.items():
             ptr = fixed[expr]
             ptr_size = "%s_size" % ptr
             last_field = max_per_base[expr]
@@ -343,7 +343,7 @@ class PythonGenerator(Generator):
         self.printer.add_empty_line()
 
         # Set each pointers
-        for ptr, info in sorted(ptr_to_info.iteritems(), key=lambda x:x[0]):
+        for ptr, info in sorted(iter(ptr_to_info.items()), key=lambda x:x[0]):
             base = info["base"]
             suffix = ""
             if info["offset"] != 0:
@@ -378,7 +378,7 @@ class PythonGenerator(Generator):
             else:
                 # Set real value from regs or stack
 
-                for expr, expr_value in snapshot.init_values.iteritems():
+                for expr, expr_value in snapshot.init_values.items():
                     if expr.name == "arg%d_%s" % (i, arg_name):
                         break
                 else:

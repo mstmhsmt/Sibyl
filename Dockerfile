@@ -19,21 +19,20 @@ MAINTAINER Camille Mougey <camille.mougey@cea.fr>
 USER root
 
 # Get unicorn
-RUN apt-get install -y python-pip &&\
-    pip install --pre unicorn
+RUN pip3 install --pre unicorn
 
 # Get Sibyl
-ADD https://github.com/cea-sec/Sibyl/archive/master.tar.gz /opt/Sibyl.tar.gz
+ADD https://github.com/mstmhsmt/Sibyl/archive/aies0.tar.gz /opt/Sibyl.tar.gz
 RUN cd /opt &&\
     tar xzvf Sibyl.tar.gz &&\
     rm Sibyl.tar.gz &&\
-    mv Sibyl-master Sibyl &&\
-    chown -Rh miasm2 Sibyl &&\
+    mv Sibyl-aies0 Sibyl &&\
+    chown -Rh miasm Sibyl &&\
     cd Sibyl &&\
-    python setup.py install
+    python3 setup.py install
 
 # Prepare the environment
 WORKDIR /opt/Sibyl
-USER miasm2
+USER miasm
 
 CMD ["/usr/local/bin/sibyl"]

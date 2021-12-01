@@ -27,7 +27,7 @@ class Trace(list):
             return self.symbols[image_name].get(symbol_name, None)
 
         found = None
-        for symbols in self.symbols.itervalues():
+        for symbols in self.symbols.values():
             if symbol_name in symbols:
                 if found is not None:
                     raise ValueError("At least two symbols for this symbol")
@@ -107,7 +107,7 @@ class Snapshot(object):
         self.output_reg[reg_name] = reg_value
 
     def add_memory_read(self, address, size, value):
-        for i in xrange(size):
+        for i in range(size):
             self.out_memory[address + i] = MemoryAccess(1,
                                                         Snapshot.get_byte(value, i),
                                                         0,  # Output access never used
@@ -123,7 +123,7 @@ class Snapshot(object):
                 self.in_memory[address + i].access |= PAGE_READ
 
     def add_memory_write(self, address, size, value):
-        for i in xrange(size):
+        for i in range(size):
             self.out_memory[address + i] = MemoryAccess(1,
                                                         Snapshot.get_byte(value, i),
                                                         0,  # Output access never used

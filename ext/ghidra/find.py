@@ -97,7 +97,7 @@ def launch_on_funcs(architecture, abi, funcs, test_set, map_addr=None,
     options += add_map
     res = {}
 
-    for i in xrange(0, len(funcs), buf_size):
+    for i in range(0, len(funcs), buf_size):
         # Build command line
         addresses = funcs[i:i + buf_size]
         command_line = [identify_binary, "find"]
@@ -120,10 +120,10 @@ def launch_on_funcs(architecture, abi, funcs, test_set, map_addr=None,
                                                                                             addresses[-1],
                                                                                             remaintime))
         if monitor.isCancelled():
-            print "Early break asked by the user"
+            print("Early break asked by the user")
             break
 
-    print "Finished ! Found %d candidates in %.02fs" % (nb_found, time.time() - starttime)
+    print("Finished ! Found %d candidates in %.02fs" % (nb_found, time.time() - starttime))
     return res
 
 

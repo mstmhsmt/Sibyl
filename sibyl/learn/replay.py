@@ -32,11 +32,11 @@ class Replay(object):
 
     def use_snapshot(self, jitter):
         '''Initilize the VM with the snapshot informations'''
-        for reg, value in self.snapshot.input_reg.iteritems():
+        for reg, value in self.snapshot.input_reg.items():
             setattr(jitter.cpu, reg, value)
 
         # Set values for input memory
-        for addr, mem in self.snapshot.in_memory.iteritems():
+        for addr, mem in self.snapshot.in_memory.items():
             assert mem.access != 0
             if not jitter.vm.is_mapped(addr, mem.size):
                 jitter.vm.add_memory_page(addr, mem.access, mem.data)
@@ -53,12 +53,12 @@ class Replay(object):
         '''Compare the expected result with the real one to determine if the function is recognize or not'''
         func_found = True
 
-        for reg, value in self.snapshot.output_reg.iteritems():
+        for reg, value in self.snapshot.output_reg.items():
             if value != getattr(jitter.cpu, reg):
                 self.replayexception += ["output register %s wrong : %i expected, %i found" % (reg, value, getattr(jitter.cpu, reg))]
                 func_found = False
 
-        for addr, mem in self.snapshot.out_memory.iteritems():
+        for addr, mem in self.snapshot.out_memory.items():
             self.logger.debug("Check @%s, %s bytes: %r", hex(addr), hex(mem.size), mem.data[:0x10])
             if mem.data != jitter.vm.get_mem(addr, mem.size):
                 self.replayexception += ["output memory wrong at 0x%x: %s expected, %s found" % (addr + offset, repr(mem.data), repr(jitter.vm.get_mem(addr + offset, mem.size)))]

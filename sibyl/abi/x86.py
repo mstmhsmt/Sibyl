@@ -61,7 +61,7 @@ class ABI_AMD64_MS(ABIRegsStack_x86):
 
     def set_ret(self, ret_addr):
         # Shadow stack reservation: 0x20 bytes
-        for i in xrange(4):
+        for i in range(4):
             self.vm_push(0)
         super(ABI_AMD64_MS, self).set_ret(ret_addr)
 

@@ -1,5 +1,10 @@
-from miasm2.core.utils import pck32, pck64
-from miasm2.jitter.csts import PAGE_READ, PAGE_WRITE
+import math
+
+#from capstone import *
+
+from miasm.core.utils import pck32, pck64
+from miasm.core.locationdb import LocationDB
+from miasm.jitter.csts import PAGE_READ, PAGE_WRITE
 try:
     import unicorn
 except ImportError:
@@ -50,17 +55,18 @@ class QEMUEngine(Engine):
 
 
 class UcWrapJitter(object):
+    logger = init_logger("UcWrapJitter")
 
     def __init__(self, machine):
-        self.ira = machine.ira()
+        self.ira = machine.lifter_model_call(LocationDB())
         self.renew()
 
     def renew(self):
         ask_arch, ask_attrib = self.ira.arch.name, self.ira.attrib
         cpucls = UcWrapCPU.available_cpus.get((ask_arch, ask_attrib), None)
+        #print('!!! [qemu.UcWrapJitter.renew] {}'.format(UcWrapCPU.available_cpus))
         if not cpucls:
-            raise ValueError("Unimplemented architecture (%s, %s)" % (ask_arch,
-                                                                      ask_attrib))
+            raise ValueError("Unimplemented architecture (%s, %s)" % (ask_arch, ask_attrib))
         arch, mode = cpucls.uc_arch, cpucls.uc_mode
         self.ask_arch = ask_arch
         self.ask_attrib = ask_attrib
@@ -71,7 +77,7 @@ class UcWrapJitter(object):
 
     def init_stack(self):
         self.vm.add_memory_page(0x1230000, PAGE_WRITE | PAGE_READ,
-                                "\x00" * 0x10000, "Stack")
+                                b"\x00" * 0x10000, "Stack")
         setattr(self.cpu, self.ira.sp.name, 0x1230000 + 0x10000)
 
     def push_uint32_t(self, value):
@@ -87,13 +93,37 @@ class UcWrapJitter(object):
     def run(self, pc, timeout_seconds=1):
         # checking which instruction you want to emulate: THUMB/THUMB2 or others
         # Note we start at ADDRESS | 1 to indicate THUMB mode.
+
+        # print('!!! [qemu.UcWrapJitter.run] {}:{} pc=0x{:x} end=0x{:x} timeout={}s'.format(self.ask_arch,
+        #                                                                                   self.ask_attrib,
+        #                                                                                   pc, END_ADDR,
+        #                                                                                   timeout_seconds))
         try:
             if self.ask_arch == 'armt' and self.ask_attrib == 'l':
                 self.mu.emu_start(pc | 1, END_ADDR, timeout_seconds * unicorn.UC_SECOND_SCALE)
             else:
                 self.mu.emu_start(pc, END_ADDR, timeout_seconds * unicorn.UC_SECOND_SCALE)
+            #print('!!! [qemu.UcWrapJitter.run] OK')
+            #code = self.mu.mem_read(pc, 96)
+            #print('!!! [qemu.UcWrapJitter.run] code: {}'.format(code.hex()))
+            #mode = CS_MODE_THUMB
+            #mode = CS_MODE_ARM
+            #md = Cs(CS_ARCH_ARM, mode)
+            #for i in md.disasm(code, pc):
+            #    print('0x{:x}:\t{}\t{}'.format(i.address, i.mnemonic, i.op_str))
+
         except unicorn.UcError as e:
-            if getattr(self.cpu, self.ira.pc.name) != END_ADDR:
+            #print('!!! [qemu.UcWrapJitter.run] {}'.format(str(e)))
+            cur_pc = getattr(self.cpu, self.ira.pc.name)
+            if cur_pc != END_ADDR:
+                # print('!!! [qemu.UcWrapJitter.run] 0x{:x} != 0x{:x}'.format(cur_pc, END_ADDR))
+                # code = self.mu.mem_read(pc, 96)
+                # print('!!! [qemu.UcWrapJitter.run] code: {}'.format(code.hex()))
+                # mode = CS_MODE_THUMB
+                # #mode = CS_MODE_ARM
+                # md = Cs(CS_ARCH_ARM, mode)
+                # for i in md.disasm(code, pc):
+                #     print('0x{:x}:\t{}\t{}'.format(i.address, i.mnemonic, i.op_str))
                 raise UnexpectedStopException()
         finally:
             self.mu.emu_stop()
@@ -109,7 +139,7 @@ class UcWrapJitter(object):
 
     @staticmethod
     def hook_mem_invalid(uc, access, address, size, value, user_data):
-        self.logger.error("Invalid memory access at %s", hex(address))
+        UcWrapJitter.logger.error("Invalid memory access at %s", hex(address))
         return False
 
 
@@ -122,6 +152,8 @@ class UcWrapVM(object):
     def add_memory_page(self, addr, access, item_str, name=""):
         size = len(item_str)
         size = (size + 0xfff) & ~0xfff
+
+        #print('!!! [qemu.UcWrapVM.add_memory_page] 0x{:x} {} {}... "{}" 0x{:x}'.format(addr, access, item_str[:16].hex(), name, size))
 
         for page in self.mem_page:
             if page["addr"] <= addr < page["addr"] + page["size"]:
@@ -138,10 +170,10 @@ class UcWrapVM(object):
         self.set_mem(addr, item_str)
 
     def get_mem(self, addr, size):
-        return str(self.mu.mem_read(addr, size))
+        return bytes(self.mu.mem_read(addr, size))
 
     def set_mem(self, addr, content):
-        self.mu.mem_write(addr, str(content))
+        self.mu.mem_write(addr, content)
 
     def get_all_memory(self):
         dico = {}
@@ -154,7 +186,7 @@ class UcWrapVM(object):
         return dico
 
     def is_mapped(self, address, size):
-        for addr in xrange(address, address + size):
+        for addr in range(address, address + size):
             for page in self.mem_page:
                 if page["addr"] <= addr < page["addr"] + page["size"]:
                     break
@@ -179,13 +211,31 @@ class UcWrapVM(object):
                 new_mem_page.append(page)
                 addrs.add(page["addr"])
 
-        for addr, page in mem_state.iteritems():
+        for addr, page in mem_state.items():
+
+            page_size = page['size']
+            frac, _n = math.modf(page_size / 1024)
+            #print('!!! [qemu.Uc.WrapVM.restore_mem_state] 0x{:x} {} size=0x{:x}'.format(addr, page['access'], page_size))
+            # if frac > 0.0 or int(_n) % 2 == 1:
+            #     print('!!! [qemu.Uc.WrapVM.restore_mem_state] {} {}'.format(frac, _n))
+
             # Add missing pages
             if addr not in addrs:
-                self.mu.mem_map(addr, page["size"])
+                page_size = page['size']
+                frac, _n = math.modf(page_size / 1024)
+                if frac > 0.0:
+                    n = int(_n)
+                    if n % 2 == 0:
+                        n += 2
+                    else:
+                        n += 1
+                    page_size = n * 1024
+
+                #print('!!! [qemu.UcWrapVM.restore_mem_state] 0x{:x} size=0x{:x}'.format(addr, page_size))
+                self.mu.mem_map(addr, page_size)
                 self.set_mem(addr, page["data"])
                 new_mem_page.append({"addr": addr,
-                                     "size": page["size"],
+                                     "size": page_size,
                                      "name": "",
                                      "access": page["access"]})
         self.mem_page = new_mem_page
@@ -212,7 +262,7 @@ class UcWrapCPU(object):
         self.logger = init_logger("UcWrapCPU")
 
     def init_regs(self):
-        for reg in self.regs.itervalues():
+        for reg in self.regs.values():
             self.mu.reg_write(reg, 0)
 
     def __setattr__(self, name, value):
@@ -234,10 +284,10 @@ class UcWrapCPU(object):
             raise AttributeError
 
     def get_gpreg(self):
-        return {k: self.mu.reg_read(v) for k, v in self.regs.iteritems()}
+        return {k: self.mu.reg_read(v) for k, v in self.regs.items()}
 
     def set_gpreg(self, values):
-        for k, v in values.iteritems():
+        for k, v in values.items():
             self.mu.reg_write(self.regs[k], v)
 
     @classmethod
@@ -356,6 +406,15 @@ class UcWrapCPU_armb(UcWrapCPU_arml):
         super(UcWrapCPU_armb, self).__init__(*args, **kwargs)
 
 
+class UcWrapCPU_armtb(UcWrapCPU_armtl):
+
+    if unicorn:
+        uc_mode = unicorn.UC_MODE_ARM + unicorn.UC_MODE_BIG_ENDIAN
+
+    def __init__(self, *args, **kwargs):
+        super(UcWrapCPU_armtb, self).__init__(*args, **kwargs)
+
+
 class UcWrapCPU_mips32l(UcWrapCPU):
 
     reg_mask = 0xFFFFFFFF
@@ -458,7 +517,8 @@ class UcWrapCPU_mips32b(UcWrapCPU_mips32l):
 UcWrapCPU_x86_32.register("x86", 32)
 UcWrapCPU_x86_64.register("x86", 64)
 UcWrapCPU_arml.register("arm", "l")
-UcWrapCPU_arml.register("armt", "l")
+UcWrapCPU_armtl.register("armt", "l")
 UcWrapCPU_armb.register("arm", "b")
+UcWrapCPU_armtb.register("armt", "b")
 UcWrapCPU_mips32l.register("mips32", "l")
 UcWrapCPU_mips32b.register("mips32", "b")

@@ -28,11 +28,11 @@ class ActionLearn(Action):
         (["-t", "--trace"], {"help": "Used tracer. Available: " \
                              ", ".join(AVAILABLE_TRACER.keys()),
                              "default": "pin",
-                             "choices": AVAILABLE_TRACER.keys()}),
+                             "choices": list(AVAILABLE_TRACER.keys())}),
         (["-g", "--generator"], {"help": "Used generator. Available: " \
                                  ", ".join(AVAILABLE_GENERATOR.keys()),
                                  "default": "python",
-                                 "choices": AVAILABLE_GENERATOR.keys()}),
+                                 "choices": list(AVAILABLE_GENERATOR.keys())}),
         (["-v", "--verbose"], {"help": "Verbose mode (use multiple time to " \
                                "increase verbosity level)",
                                "action": "count",
@@ -87,5 +87,5 @@ class ActionLearn(Action):
         if self.args.output:
             open(self.args.output, "w+").write(createdTest)
         else:
-            print createdTest
+            print(createdTest)
 

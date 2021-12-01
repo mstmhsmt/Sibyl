@@ -6,7 +6,7 @@ import subprocess
 import shutil
 import os
 
-from miasm2.core.asmblock import AsmBlockBad, log_asmblock
+from miasm.core.asmblock import AsmBlockBad, log_asmblock
 
 from sibyl.heuristics.heuristic import Heuristic
 import sibyl.heuristics.csts as csts
@@ -43,7 +43,7 @@ def recursive_call(func_heur, addresses):
 
     # Find potential addresses
     addresses = {}
-    for bbl in label2block.itervalues():
+    for bbl in label2block.values():
         if len(bbl.lines) == 0:
             continue
         last_line = bbl.lines[-1]
@@ -247,14 +247,14 @@ class FuncHeuristic(Heuristic):
         if do_recursive:
             new_addresses = recursive_call(self,
                                            [addr
-                                            for addr, vote in addresses.iteritems()
+                                            for addr, vote in addresses.items()
                                             if vote > 0])
-            for addr, vote in new_addresses.iteritems():
+            for addr, vote in new_addresses.items():
                 addresses[addr] = addresses.get(addr, 0) + vote
         self._votes = addresses
 
     def guess(self):
-        for address, value in self.votes.iteritems():
+        for address, value in self.votes.items():
             # Heuristic may vote negatively
             if value > 0:
                 yield address

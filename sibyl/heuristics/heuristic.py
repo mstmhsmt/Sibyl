@@ -18,7 +18,7 @@ class Heuristic(object):
         """
         votes = {}
         for heuristic in self.heuristics:
-            for name, vote in heuristic(self).iteritems():
+            for name, vote in heuristic(self).items():
                 votes[name] = votes.get(name, 0) + vote
         self._votes = votes
 
@@ -44,7 +44,7 @@ class Heuristic(object):
 
     def guess(self):
         """Return the best candidate"""
-        sorted_votes = sorted(self.votes.iteritems(), key=lambda x:x[1])
+        sorted_votes = sorted(self.votes.items(), key=lambda x:x[1])
         if not sorted_votes:
             # No solution
             return False
