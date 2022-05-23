@@ -314,7 +314,7 @@ class TestStrcmp(Test):
 
 class TestStrncmp(Test):
 
-    def my_check(self, addr1, addr2, l, str1, str2):
+    def my_check(self, addr1, addr2, length, str1, str2):
         result = self._get_result()
         result = self._to_int(result)
 
@@ -327,7 +327,7 @@ class TestStrncmp(Test):
             str1 = str1.split('\x00')[0]
         if "\x00" in str2:
             str2 = str2.split('\x00')[0]
-        return all([result == cmp(str1[:l], str2[:l]),
+        return all([result == cmp(str1[:length], str2[:length]),
                     self._ensure_mem(addr1, str1.encode('utf-8')),
                     self._ensure_mem(addr2, str2.encode('utf-8'))])
 
@@ -820,8 +820,8 @@ class TestMemset(Test):
         self.my_addr1 = self._alloc_string(self.my_string1, write=True)
 
         # print(f'!!! [string.TestMemset.init1] arg0=0x{self.my_addr1:x}')
-        # print('!!! [string.TestMemset.init1] arg1={}'.format(ord(self.my_pattern)))
-        # print('!!! [string.TestMemset.init1] arg2={}'.format(len(self.my_string1)-1))
+        # print(f'!!! [string.TestMemset.init1] arg1={ord(self.my_pattern)}')
+        # print(f'!!! [string.TestMemset.init1] arg2={len(self.my_string1)-1}')
 
         self._add_arg(0, self.my_addr1)
         self._add_arg(1, ord(self.my_pattern))
@@ -866,11 +866,16 @@ class TestMemmove(Test):
         self._add_arg(2, len(self.my_string1))
 
     def check1(self):
-        result = self._get_result()
+        ignore_retval = True
+
+        retval_cond = True
+        if not ignore_retval:
+            result = self._get_result()
+            retval_cond = result == self.my_addr2
 
         # print(f'!!! [string.TestMemmove.check1] result=0x{result:x}')
 
-        return all([result == self.my_addr2,
+        return all([retval_cond,
                     self._ensure_mem(self.my_addr1, self.my_string1.encode('utf-8')),
                     self._ensure_mem(self.my_addr2, self.my_string1.encode('utf-8')),
                     ])
@@ -927,20 +932,30 @@ class TestMemmove(Test):
 class TestMemcpy(TestMemmove):
 
     def check2(self):
-        result = self._get_result()
+        ignore_retval = True
+
+        retval_cond = True
+        if not ignore_retval:
+            result = self._get_result()
+            retval_cond = result == self.my_addr1+self.off
 
         # print(f'!!! [string.TestMemcpy.check2] result=0x{result:x}')
 
-        return all([result == self.my_addr1+self.off,
+        return all([retval_cond,
                     not self._ensure_mem(self.my_addr1+self.off,
                                          self.my_string1[:self.cpt].encode('utf-8'))])
 
     def check3(self):
-        result = self._get_result()
+        ignore_retval = True
+
+        retval_cond = True
+        if not ignore_retval:
+            result = self._get_result()
+            retval_cond = result == self.my_addr1
 
         # print(f'!!! [string.TestMemcpy.check3] result=0x{result:x}')
 
-        return all([result == self.my_addr1,
+        return all([retval_cond,
                     not self._ensure_mem(self.my_addr1,
                                          self.my_string1[self.off:self.off+self.cpt]
                                          .encode('utf-8'))])

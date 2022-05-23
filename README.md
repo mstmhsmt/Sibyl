@@ -172,9 +172,8 @@ For the `qemu` engine, the `unicorn` python package must be installed (refer to 
 
 _Sibyl_ comes as a Python module, and the installation follow the standard procedure:
 ```
-$ python setup.py build
-# Add the resulting build directory in your PYTHONPATH, or:
-$ python setup.py install
+$ python -m build
+$ pip install dist/sibyl-0.1.tar.gz
 ```
 
 In addition of the `sibyl` Python module, a CLI tool is provided, named
