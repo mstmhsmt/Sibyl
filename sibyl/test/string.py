@@ -30,7 +30,7 @@ class TestStrlen(Test):
     def check(self):
         result = self._get_result()
 
-        #print('!!! [string.TestStrlen.check] my_addr=0x{:x} result={}'.format(self.my_addr, result))
+        # print(f'!!! [string.TestStrlen.check] my_addr=0x{self.my_addr:x} result={result}')
 
         if result != len(self.my_string):
             return False
@@ -50,11 +50,9 @@ class TestStrlen(Test):
 
         return self._ensure_mem(self.my_addr, self.my_string.encode('utf-8') * 4 + b"\x00")
 
-
     # Properties
     func = "strlen"
     tests = TestSetTest(init, check) & TestSetTest(init2, check2)
-
 
 
 class TestStrnicmp(Test):
@@ -96,7 +94,6 @@ class TestStrnicmp(Test):
                     self._ensure_mem(self.my_addr1, self.my_string1.encode('utf-8')),
                     self._ensure_mem(self.my_addr2, self.my_string2.encode('utf-8'))])
 
-
     # Properties
     func = "strnicmp"
     tests = TestSetTest(init, check) & TestSetTest(init2, check2)
@@ -126,7 +123,6 @@ class TestStrcpy(Test):
     tests = TestSetTest(init, check)
 
 
-
 class TestStrncpy(Test):
 
     def my_init(self, dest_size, src_string, size):
@@ -143,7 +139,7 @@ class TestStrncpy(Test):
                     self._ensure_mem(self.my_addr, string.encode('utf-8') + b"\x00"),
                     self._ensure_mem(self.my_addr2, string[:size].encode('utf-8')),
                     not(self._ensure_mem(self.my_addr2 + size,
-                                        string[size:sizemax].encode('utf-8')))])
+                                         string[size:sizemax].encode('utf-8')))])
 
     # Test
     my_string = "Hello, world !Hello, world !Hello, world !Hello, world !"
@@ -181,9 +177,9 @@ class TestStrcat(Test):
     my_string2 = " world !"
 
     def init(self):
-        self.my_addr = self._alloc_mem(len(self.my_string) + \
-                                           len(self.my_string2) + 1,
-                                      write=True)
+        self.my_addr = self._alloc_mem(len(self.my_string) +
+                                       len(self.my_string2) + 1,
+                                       write=True)
         self._write_string(self.my_addr, self.my_string)
         self.my_addr2 = self._alloc_string(self.my_string2)
 
@@ -195,7 +191,8 @@ class TestStrcat(Test):
 
         return all([result == self.my_addr,
                     self._ensure_mem(self.my_addr,
-                                     self.my_string.encode('utf-8') + self.my_string2.encode('utf-8')),
+                                     self.my_string.encode('utf-8') +
+                                     self.my_string2.encode('utf-8')),
                     self._ensure_mem(self.my_addr2, self.my_string2.encode('utf-8'))])
 
     # Properties
@@ -213,7 +210,7 @@ class TestStrncat(Test):
     def init(self):
         self.total_len = len(self.my_string) + self.size_trunc
         self.my_addr = self._alloc_mem(self.total_len + 1,
-                                      write=True)
+                                       write=True)
         self._write_string(self.my_addr, self.my_string)
         self.my_addr2 = self._alloc_string(self.my_string2)
 
@@ -232,8 +229,10 @@ class TestStrncat(Test):
     func = "strncat"
     tests = TestSetTest(init, check)
 
+
 def cmp(a, b):
     return (a > b) - (a < b)
+
 
 class TestStrcmp(Test):
 
@@ -310,7 +309,7 @@ class TestStrcmp(Test):
     # Properties
     func = "strcmp"
     tests = TestSetTest(init1, check1) & TestSetTest(init2, check2) & \
-            TestSetTest(init3, check3) & TestSetTest(init4, check4)
+        TestSetTest(init3, check3) & TestSetTest(init4, check4)
 
 
 class TestStrncmp(Test):
@@ -361,7 +360,7 @@ class TestStrncmp(Test):
 
         self._add_arg(0, self.my_addr2)
         self._add_arg(1, self.my_addr1)
-        self._add_arg(2, self.my_len - 1) # Avoid strcmp confusion
+        self._add_arg(2, self.my_len - 1)  # Avoid strcmp confusion
 
     def check2(self):
         return self.my_check(self.my_addr2, self.my_addr1,
@@ -410,12 +409,11 @@ class TestStrncmp(Test):
                              self.my_len,
                              self.my_string5, self.my_string6)
 
-
     # Properties
     func = "strncmp"
     tests = TestSetTest(init1, check1) & TestSetTest(init2, check2) & \
-            TestSetTest(init3, check3) & TestSetTest(init4, check4) & \
-            TestSetTest(init5, check5)
+        TestSetTest(init3, check3) & TestSetTest(init4, check4) & \
+        TestSetTest(init5, check5)
 
 
 class TestStricmp(Test):
@@ -493,7 +491,7 @@ class TestStricmp(Test):
     # Properties
     func = "stricmp"
     tests = TestSetTest(init1, check1) & TestSetTest(init2, check2) & \
-            TestSetTest(init3, check3) & TestSetTest(init4, check4)
+        TestSetTest(init3, check3) & TestSetTest(init4, check4)
 
 
 class TestStrchr(Test):
@@ -531,6 +529,7 @@ class TestStrchr(Test):
     func = "strchr"
     tests = TestSetTest(init1, check1) & TestSetTest(init2, check2)
 
+
 class TestStrrchr(Test):
 
     # Test
@@ -564,6 +563,7 @@ class TestStrrchr(Test):
     # Properties
     func = "strrchr"
     tests = TestSetTest(init1, check1) & TestSetTest(init2, check2)
+
 
 class TestStrnlen(Test):
 
@@ -599,10 +599,10 @@ class TestStrnlen(Test):
 
         return self._ensure_mem(self.my_addr, self.my_string.encode('utf-8') + b"\x00")
 
-
     # Properties
     func = "strnlen"
     tests = TestSetTest(init1, check1) & TestSetTest(init2, check2)
+
 
 class TestStrspn(Test):
 
@@ -612,7 +612,7 @@ class TestStrspn(Test):
         for char in str1:
             if char == '\x00':
                 break
-            if not char in str2:
+            if char not in str2:
                 break
             length += 1
         return all([result == length,
@@ -726,6 +726,7 @@ class TestStrpbrk(Test):
     func = "strpbrk"
     tests = TestSetTest(init1, check1) & TestSetTest(init2, check2) & TestSetTest(init3, check3)
 
+
 class TestStrtok(Test):
 
     def reset(self):
@@ -818,9 +819,9 @@ class TestMemset(Test):
     def init1(self):
         self.my_addr1 = self._alloc_string(self.my_string1, write=True)
 
-        #print('!!! [string.TestMemset.init1] arg0=0x{:x}'.format(self.my_addr1))
-        #print('!!! [string.TestMemset.init1] arg1={}'.format(ord(self.my_pattern)))
-        #print('!!! [string.TestMemset.init1] arg2={}'.format(len(self.my_string1)-1))
+        # print(f'!!! [string.TestMemset.init1] arg0=0x{self.my_addr1:x}')
+        # print('!!! [string.TestMemset.init1] arg1={}'.format(ord(self.my_pattern)))
+        # print('!!! [string.TestMemset.init1] arg2={}'.format(len(self.my_string1)-1))
 
         self._add_arg(0, self.my_addr1)
         self._add_arg(1, ord(self.my_pattern))
@@ -832,12 +833,11 @@ class TestMemset(Test):
 
         result = self._get_result()
 
-        #print('!!! [string.TestMemset.check1] result=0x{:x}'.format(result))
+        # print(f'!!! [string.TestMemset.check1] result=0x{result:x}')
 
         return all([result == self.my_addr1 or
-                    result == self.my_addr1 + len(self.my_string1)-1, # non-standard
+                    result == self.my_addr1 + len(self.my_string1)-1,  # non-standard
                     self._ensure_mem(self.my_addr1, expected_mem.encode('utf-8'))])
-
 
     # Properties
     func = "memset"
@@ -857,9 +857,9 @@ class TestMemmove(Test):
         self.my_addr2 = self._alloc_string("\x00"*len(self.my_string1),
                                            write=True)
 
-        #print('!!! [string.TestMemmove.init1] arg0=0x{:x}'.format(self.my_addr2))
-        #print('!!! [string.TestMemmove.init1] arg1=0x{:x}'.format(self.my_addr1))
-        #print('!!! [string.TestMemmove.init1] arg2={}'.format(len(self.my_string1)))
+        # print(f'!!! [string.TestMemmove.init1] arg0=0x{self.my_addr2:x}')
+        # print(f'!!! [string.TestMemmove.init1] arg1=0x{self.my_addr1:x}')
+        # print(f'!!! [string.TestMemmove.init1] arg2={len(self.my_string1)}')
 
         self._add_arg(0, self.my_addr2)
         self._add_arg(1, self.my_addr1)
@@ -868,7 +868,7 @@ class TestMemmove(Test):
     def check1(self):
         result = self._get_result()
 
-        #print('!!! [string.TestMemmove.check1] result=0x{:x}'.format(result))
+        # print(f'!!! [string.TestMemmove.check1] result=0x{result:x}')
 
         return all([result == self.my_addr2,
                     self._ensure_mem(self.my_addr1, self.my_string1.encode('utf-8')),
@@ -880,9 +880,9 @@ class TestMemmove(Test):
     def init2(self):
         self.my_addr1 = self._alloc_string(self.my_string1, write=True)
 
-        #print('!!! [string.TestMemmove.init2] arg0=0x{:x}'.format(self.my_addr1+self.off))
-        #print('!!! [string.TestMemmove.init2] arg1=0x{:x}'.format(self.my_addr1))
-        #print('!!! [string.TestMemmove.init2] arg2={}'.format(self.cpt))
+        # print(f'!!! [string.TestMemmove.init2] arg0=0x{self.my_addr1+self.off:x}')
+        # print(f'!!! [string.TestMemmove.init2] arg1=0x{self.my_addr1:x}')
+        # print(f'!!! [string.TestMemmove.init2] arg2={self.cpt}')
 
         self._add_arg(0, self.my_addr1+self.off)
         self._add_arg(1, self.my_addr1)
@@ -891,7 +891,7 @@ class TestMemmove(Test):
     def check2(self):
         result = self._get_result()
 
-        #print('!!! [string.TestMemmove.check2] result=0x{:x}'.format(result))
+        # print(f'!!! [string.TestMemmove.check2] result=0x{result:x}')
 
         return all([result == self.my_addr1+self.off,
                     self._ensure_mem(self.my_addr1+self.off,
@@ -902,9 +902,9 @@ class TestMemmove(Test):
     def init3(self):
         self.my_addr1 = self._alloc_string(self.my_string1, write=True)
 
-        #print('!!! [string.TestMemmove.init2] arg0=0x{:x}'.format(self.my_addr1))
-        #print('!!! [string.TestMemmove.init2] arg1=0x{:x}'.format(self.my_addr1+self.off))
-        #print('!!! [string.TestMemmove.init2] arg2={}'.format(self.cpt))
+        # print(f'!!! [string.TestMemmove.init3] arg0=0x{self.my_addr1:x}')
+        # print(f'!!! [string.TestMemmove.init3] arg1=0x{self.my_addr1+self.off:x}')
+        # print(f'!!! [string.TestMemmove.init3] arg2={self.cpt}')
 
         self._add_arg(0, self.my_addr1)
         self._add_arg(1, self.my_addr1+self.off)
@@ -913,7 +913,7 @@ class TestMemmove(Test):
     def check3(self):
         result = self._get_result()
 
-        #print('!!! [string.TestMemmove.check3] result=0x{:x}'.format(result))
+        # print(f'!!! [string.TestMemmove.check3] result=0x{result:x}')
 
         return all([result == self.my_addr1,
                     self._ensure_mem(self.my_addr1,
@@ -929,26 +929,27 @@ class TestMemcpy(TestMemmove):
     def check2(self):
         result = self._get_result()
 
-        #print('!!! [string.TestMemcpy.check2] result=0x{:x}'.format(result))
+        # print(f'!!! [string.TestMemcpy.check2] result=0x{result:x}')
 
         return all([result == self.my_addr1+self.off,
                     not self._ensure_mem(self.my_addr1+self.off,
                                          self.my_string1[:self.cpt].encode('utf-8'))])
+
     def check3(self):
         result = self._get_result()
 
-        #print('!!! [string.TestMemcpy.check3] result=0x{:x}'.format(result))
+        # print(f'!!! [string.TestMemcpy.check3] result=0x{result:x}')
 
         return all([result == self.my_addr1,
                     not self._ensure_mem(self.my_addr1,
-                                         self.my_string1[self.off:self.off+self.cpt].encode('utf-8'))])
+                                         self.my_string1[self.off:self.off+self.cpt]
+                                         .encode('utf-8'))])
+
     # Properties
     func = "memcpy"
     # At least one of the test2/test3 may fail for memcpy
     tests = (TestSetTest(TestMemmove.init1, TestMemmove.check1) &
              (TestSetTest(TestMemmove.init2, check2) | TestSetTest(TestMemmove.init3, check3)))
-
-
 
 
 class TestStrrev(Test):
@@ -957,7 +958,7 @@ class TestStrrev(Test):
     my_string = "Hello, w%srld !"
 
     def init(self):
-        self.my_addr = self._alloc_string(self.my_string, write = True)
+        self.my_addr = self._alloc_string(self.my_string, write=True)
         self._add_arg(0, self.my_addr)
 
     def check(self):
@@ -967,11 +968,9 @@ class TestStrrev(Test):
             return False
         return self._ensure_mem(self.my_addr, self.my_string[::-1].encode('utf-8') + b"\x00")
 
-
     # Properties
     func = "strrev"
     tests = TestSetTest(init, check)
-
 
 
 class TestMemcmp(Test):
@@ -992,6 +991,7 @@ class TestMemcmp(Test):
     my_string1 = "He\x00l2lo"
     my_string2 = "He\x00l1lo"
     my_len = len(my_string1)
+
     def init1(self):
         self.my_addr1 = self._alloc_string(self.my_string1)
         self.my_addr2 = self._alloc_string(self.my_string2)
@@ -1040,6 +1040,7 @@ class TestBzero(Test):
     # Test1
     my_string = "Hello \x00, w%srld !, hello world"
     my_len = len(my_string)
+
     def init1(self):
         self.my_addr = self._alloc_string(self.my_string, write=True)
         self._add_arg(0, self.my_addr)
@@ -1051,6 +1052,7 @@ class TestBzero(Test):
     # Test2
     my_string2 = my_string * 50
     my_len2 = len(my_string2)
+
     def init2(self):
         self.my_addr = self._alloc_string(self.my_string2, write=True)
         self._add_arg(0, self.my_addr)
@@ -1059,11 +1061,9 @@ class TestBzero(Test):
     def check2(self):
         return self._ensure_mem(self.my_addr, self.my_len2 * b"\x00")
 
-
     # Properties
     func = "bzero"
     tests = TestSetTest(init1, check1) & TestSetTest(init2, check2)
-
 
 
 TESTS = [TestStrlen, TestStrnicmp, TestStrcpy, TestStrncpy,
@@ -1073,4 +1073,4 @@ TESTS = [TestStrlen, TestStrnicmp, TestStrcpy, TestStrncpy,
          TestStricmp, TestStrrev, TestMemcmp, TestBzero,
          TestStrncmp, TestMemcpy]
 
-#TESTS = [TestMemset, TestMemmove, TestMemcpy]
+# TESTS = [TestMemset, TestMemmove, TestMemcpy]
