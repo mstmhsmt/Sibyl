@@ -24,7 +24,7 @@ default_config = {
     "tests": {"string": "$SIBYL/test/string.py",
               "stdlib": "$SIBYL/test/stdlib.py",
               "ctype": "$SIBYL/test/ctype.py",
-    },
+              },
     "pin_root": "$PIN_ROOT",
     "pin_tracer": "$SIBYL/ext/pin_tracer/pin_tracer.so",
     "prune_strategy": "branch",
@@ -32,7 +32,7 @@ default_config = {
     "prune_keep_max": 5,
     "stubs": ["$MIASM/os_dep/win_api_x86_32.py",
               "$MIASM/os_dep/linux_stdlib.py",
-    ],
+              ],
     "idaq64_path": "",
     "ghidra_headless_path": "",
     "ghidra_export_function": "$SIBYL/ext/ghidra/ExportFunction.java",
@@ -44,6 +44,7 @@ config_paths = [os.path.join(path, 'sibyl.conf')
 if os.getenv("HOME"):
     config_paths += [os.path.join(os.getenv("HOME"), 'sibyl.conf'),
                      os.path.join(os.getenv("HOME"), '.sibyl.conf')]
+
 
 class Config(object):
     """Configuration wrapper"""
@@ -76,8 +77,8 @@ class Config(object):
             path = path.replace("$SIBYL", sibyl_base)
 
         if "$MIASM" in path:
-            import miasm2
-            miasm2_base = miasm2.__path__[0]
+            import miasm
+            miasm2_base = miasm.__path__[0]
             path = path.replace("$MIASM", miasm2_base)
 
         path = os.path.expandvars(path)
@@ -90,7 +91,7 @@ class Config(object):
         cparser = configparser.SafeConfigParser()
         cparser.read(files)
 
-        config = {}
+        # config = {}
         # Find
         if cparser.has_section("find"):
 
@@ -363,7 +364,6 @@ class Config(object):
         GHIDRA
         """
         return self.expandpath(self.config["ghidra_export_function"])
-
 
 
 config = Config(default_config, config_paths)
