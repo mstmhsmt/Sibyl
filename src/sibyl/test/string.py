@@ -854,8 +854,7 @@ class TestMemmove(Test):
 
     def init1(self):
         self.my_addr1 = self._alloc_string(self.my_string1)
-        self.my_addr2 = self._alloc_string("\x00"*len(self.my_string1),
-                                           write=True)
+        self.my_addr2 = self._alloc_string("\x00"*len(self.my_string1), write=True)
 
         # print(f'!!! [string.TestMemmove.init1] arg0=0x{self.my_addr2:x}')
         # print(f'!!! [string.TestMemmove.init1] arg1=0x{self.my_addr1:x}')
@@ -873,7 +872,7 @@ class TestMemmove(Test):
             result = self._get_result()
             retval_cond = result == self.my_addr2
 
-        # print(f'!!! [string.TestMemmove.check1] result=0x{result:x}')
+            # print(f'!!! [string.TestMemmove.check1] result=0x{result:x}')
 
         return all([retval_cond,
                     self._ensure_mem(self.my_addr1, self.my_string1.encode('utf-8')),
@@ -929,7 +928,119 @@ class TestMemmove(Test):
     tests = TestSetTest(init1, check1) & TestSetTest(init2, check2) & TestSetTest(init3, check3)
 
 
+class TestMemmoveWeak(Test):
+
+    # Test
+    my_string1 = "NED\x00A1E"
+    off = 3
+    cpt = 6
+
+    def init1(self):
+        self.my_addr1 = self._alloc_string(self.my_string1)
+        self.my_addr2 = self._alloc_string("\x00"*len(self.my_string1), write=True)
+
+        # print(f'!!! [string.TestMemmoveWeak.init1] arg0=0x{self.my_addr2:x}')
+        # print(f'!!! [string.TestMemmoveWeak.init1] arg1=0x{self.my_addr1:x}')
+        # print(f'!!! [string.TestMemmoveWeak.init1] arg2={len(self.my_string1)}')
+
+        self._add_arg(0, self.my_addr2)
+        self._add_arg(1, self.my_addr1)
+        self._add_arg(2, len(self.my_string1))
+
+    def check1(self):
+        ignore_retval = True
+
+        retval_cond = True
+        if not ignore_retval:
+            result = self._get_result()
+            retval_cond = result == self.my_addr2
+
+            # print(f'!!! [string.TestMemmoveWeak.check1] result=0x{result:x}')
+
+        return all([retval_cond,
+                    self._ensure_mem(self.my_addr1, self.my_string1.encode('utf-8')),
+                    self._ensure_mem(self.my_addr2, self.my_string1.encode('utf-8')),
+                    ])
+
+    # Test 2 (avoid memcpy confusion)
+
+    def init2(self):
+        self.my_addr1 = self._alloc_string(self.my_string1, write=True)
+
+        # print(f'!!! [string.TestMemmoveWeak.init2] arg0=0x{self.my_addr1+self.off:x}')
+        # print(f'!!! [string.TestMemmoveWeak.init2] arg1=0x{self.my_addr1:x}')
+        # print(f'!!! [string.TestMemmoveWeak.init2] arg2={self.cpt}')
+
+        self._add_arg(0, self.my_addr1+self.off)
+        self._add_arg(1, self.my_addr1)
+        self._add_arg(2, self.cpt)
+
+    def check2(self):
+        result = self._get_result()
+
+        # print(f'!!! [string.TestMemmoveWeak.check2] result=0x{result:x}')
+
+        return all([result == self.my_addr1+self.off,
+                    self._ensure_mem(self.my_addr1+self.off,
+                                     self.my_string1[:self.cpt].encode('utf-8'))])
+
+    # Test 3 (avoid memcpy confusion)
+
+    def init3(self):
+        self.my_addr1 = self._alloc_string(self.my_string1, write=True)
+
+        # print(f'!!! [string.TestMemmoveWeak.init3] arg0=0x{self.my_addr1:x}')
+        # print(f'!!! [string.TestMemmoveWeak.init3] arg1=0x{self.my_addr1+self.off:x}')
+        # print(f'!!! [string.TestMemmoveWeak.init3] arg2={self.cpt}')
+
+        self._add_arg(0, self.my_addr1)
+        self._add_arg(1, self.my_addr1+self.off)
+        self._add_arg(2, self.cpt)
+
+    def check3(self):
+        result = self._get_result()
+
+        # print(f'!!! [string.TestMemmoveWeak.check3] result=0x{result:x}')
+
+        return all([result == self.my_addr1,
+                    self._ensure_mem(self.my_addr1,
+                                     self.my_string1[self.off:self.off+self.cpt].encode('utf-8'))])
+
+    # Properties
+    func = "memmove"
+    tests = TestSetTest(init1, check1) & TestSetTest(init2, check2) & TestSetTest(init3, check3)
+
+
 class TestMemcpy(TestMemmove):
+
+    my_string2 = "AbCdEfG"
+
+    def init1(self):
+        self.my_addr1 = self._alloc_string(self.my_string2)
+        self.my_addr2 = self._alloc_string("\x00"*len(self.my_string2), write=True)
+
+        # print(f'!!! [string.TestMemcpy.init1] arg0=0x{self.my_addr2:x}')
+        # print(f'!!! [string.TestMemcpy.init1] arg1=0x{self.my_addr1:x}')
+        # print(f'!!! [string.TestMemcpy.init1] arg2={len(self.my_string2)}')
+
+        self._add_arg(0, self.my_addr2)
+        self._add_arg(1, self.my_addr1)
+        self._add_arg(2, len(self.my_string2))
+
+    def check1(self):
+        ignore_retval = True
+
+        retval_cond = True
+        if not ignore_retval:
+            result = self._get_result()
+            retval_cond = result == self.my_addr2
+
+            # print(f'!!! [string.TestMemcpy.check1] result=0x{result:x}')
+
+        return all([retval_cond,
+                    self._ensure_mem(self.my_addr1, self.my_string2.encode('utf-8')),
+                    self._ensure_mem(self.my_addr2, self.my_string2.encode('utf-8')),
+                    ])
 
     def check2(self):
         ignore_retval = True
@@ -939,7 +1050,7 @@ class TestMemcpy(TestMemmove):
             result = self._get_result()
             retval_cond = result == self.my_addr1+self.off
 
-        # print(f'!!! [string.TestMemcpy.check2] result=0x{result:x}')
+            # print(f'!!! [string.TestMemcpy.check2] result=0x{result:x}')
 
         return all([retval_cond,
                     not self._ensure_mem(self.my_addr1+self.off,
@@ -953,7 +1064,7 @@ class TestMemcpy(TestMemmove):
             result = self._get_result()
             retval_cond = result == self.my_addr1
 
-        # print(f'!!! [string.TestMemcpy.check3] result=0x{result:x}')
+            # print(f'!!! [string.TestMemcpy.check3] result=0x{result:x}')
 
         return all([retval_cond,
                     not self._ensure_mem(self.my_addr1,
@@ -964,7 +1075,48 @@ class TestMemcpy(TestMemmove):
     func = "memcpy"
     # At least one of the test2/test3 may fail for memcpy
     tests = (TestSetTest(TestMemmove.init1, TestMemmove.check1) &
-             (TestSetTest(TestMemmove.init2, check2) | TestSetTest(TestMemmove.init3, check3)))
+             (TestSetTest(TestMemmove.init2, check2) | TestSetTest(TestMemmove.init3, check3))
+             )
+
+
+class TestMemcpyWeak(TestMemmoveWeak):
+
+    def check2(self):
+        ignore_retval = True
+
+        retval_cond = True
+        if not ignore_retval:
+            result = self._get_result()
+            retval_cond = result == self.my_addr1+self.off
+
+            # print(f'!!! [string.TestMemcpyWeak.check2] result=0x{result:x}')
+
+        return all([retval_cond,
+                    not self._ensure_mem(self.my_addr1+self.off,
+                                         self.my_string1[:self.cpt].encode('utf-8'))])
+
+    def check3(self):
+        ignore_retval = True
+
+        retval_cond = True
+        if not ignore_retval:
+            result = self._get_result()
+            retval_cond = result == self.my_addr1
+
+            # print(f'!!! [string.TestMemcpyWeak.check3] result=0x{result:x}')
+
+        return all([retval_cond,
+                    not self._ensure_mem(self.my_addr1,
+                                         self.my_string1[self.off:self.off+self.cpt]
+                                         .encode('utf-8'))])
+
+    # Properties
+    func = "memcpy"
+    # At least one of the test2/test3 may fail for memcpy
+    tests = (
+        TestSetTest(TestMemmoveWeak.init1, TestMemmoveWeak.check1) &
+        (TestSetTest(TestMemmoveWeak.init2, check2) | TestSetTest(TestMemmoveWeak.init3, check3))
+    )
 
 
 class TestStrrev(Test):
@@ -1086,6 +1238,6 @@ TESTS = [TestStrlen, TestStrnicmp, TestStrcpy, TestStrncpy,
          TestStrrchr, TestStrnlen, TestStrspn, TestStrpbrk,
          TestStrtok, TestStrsep, TestMemset, TestMemmove,
          TestStricmp, TestStrrev, TestMemcmp, TestBzero,
-         TestStrncmp, TestMemcpy]
+         TestStrncmp, TestMemcpy, TestMemmoveWeak, TestMemcpyWeak]
 
 # TESTS = [TestMemset, TestMemmove, TestMemcpy]

@@ -38,8 +38,8 @@ class Test(object):
     # Elements to override
 
     func = ""   # Possible function if test passes
-    tests = [] # List of tests (init, check) to pass
-    reset_mem = True # Reset memory between tests
+    tests = []  # List of tests (init, check) to pass
+    reset_mem = True  # Reset memory between tests
 
     def init(self):
         "Called for setting up the test case"
@@ -123,7 +123,10 @@ class Test(object):
 
     def _ensure_mem(self, addr, element):
         try:
-            return self.jitter.vm.get_mem(addr, len(element)) == element
+            # return self.jitter.vm.get_mem(addr, len(element)) == element
+            mem = self.jitter.vm.get_mem(addr, len(element))
+            # print(f'!!! [test.Test._ensure_mem] addr=0x{addr:x} element={element} mem={mem}')
+            return mem == element
         except RuntimeError:
             return False
 
@@ -155,10 +158,10 @@ class Test(object):
 
     @staticmethod
     def pack(element, size):
-        orig_element = element
+        # orig_element = element
         out = []
         while element != 0:
-            #print('!!! [test.Test.pack] {}'.format(element % 0x100))
+            # print('!!! [test.Test.pack] {}'.format(element % 0x100))
             out.append(element % 0x100)
             element >>= 8
         if len(out) > int(size / 8):
@@ -166,13 +169,13 @@ class Test(object):
         for _ in range(int(size / 8) - len(out)):
             out.append(0)
         out_ = bytes(out)
-        #print('!!! [test.Test.pack] 0x{:x}({}) -> {}'.format(orig_element, size, out_.hex()))
+        # print('!!! [test.Test.pack] 0x{:x}({}) -> {}'.format(orig_element, size, out_.hex()))
         return out_
 
     @staticmethod
     def unpack(element):
         i = int.from_bytes(element, byteorder='little', signed=False)
-        #print('!!! [test.Test.unpack] {} -> 0x{:x}'.format(element.hex(), i))
+        # print('!!! [test.Test.unpack] {} -> 0x{:x}'.format(element.hex(), i))
         return i
 
 
