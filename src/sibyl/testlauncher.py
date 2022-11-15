@@ -18,20 +18,24 @@
 
 
 import time
-import signal
-import logging
+# import signal
+# import logging
 from miasm.analysis.binary import Container, ContainerPE, ContainerELF
 from miasm.core.locationdb import LocationDB
 
-from sibyl.commons import init_logger, TimeoutException, END_ADDR
+from sibyl.commons import init_logger, END_ADDR  # , TimeoutException
 from sibyl.engine import QEMUEngine, MiasmEngine
 from sibyl.config import config
+
 
 class TestLauncher(object):
     "Launch tests for a function and report matching candidates"
 
     def __init__(self, filename_or_content, machine, abicls, tests_cls, engine_name,
-                 map_addr=0):
+                 map_addr=0, early_quit_all=True):
+
+        # quit all tests when a timeout occurred
+        self.early_quit_all = early_quit_all
 
         # Logging facilities
         self.logger = init_logger("testlauncher")
@@ -134,7 +138,12 @@ class TestLauncher(object):
             self.abi.prepare_call(ret_addr=END_ADDR)
 
             # Run code
+            start_time = time.monotonic()
             status = self.engine.run(address, timeout_seconds)
+            lap_time = time.monotonic() - start_time
+
+            self.timeout_flag = lap_time > timeout_seconds
+
             if not status:
                 # Early quit
                 self._temp_reset_mem = True
@@ -161,9 +170,12 @@ class TestLauncher(object):
         starttime = time.time()
 
         self.engine.prepare_run()
+
         for test in self.tests:
-            #print('!!! [testlauncher.run] {}'.format(test))
+            # print('!!! [testlauncher.run] {test}')
             self.launch_tests(test, address, *args, **kwargs)
+            if self.early_quit_all and self.timeout_flag:
+                break
 
         self.logger.info("Total time: %.4f seconds" % (time.time() - starttime))
         return self._possible_funcs

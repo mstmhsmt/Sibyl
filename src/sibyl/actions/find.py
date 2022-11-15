@@ -110,7 +110,6 @@ class ActionFind(Action):
         # Signal to master the end
         msg_queue.put(None)
 
-
     def run(self):
         """Launch search"""
 
@@ -214,7 +213,7 @@ class ActionFind(Action):
 
         # Get results
         nb_poison = 0
-        results = {} # address -> possible functions
+        results = {}  # address -> possible functions
         while nb_poison < cpu_c:
             msg = msg_queue.get()
             # Poison pill

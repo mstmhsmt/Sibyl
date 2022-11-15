@@ -30,6 +30,7 @@ class QEMUEngine(Engine):
         super(QEMUEngine, self).__init__(machine)
 
     def run(self, address, timeout_seconds):
+        # print(f'!!! [qemu.QEMUEngine.run] address={address:#x} timeout={timeout_seconds}s')
         try:
             self.jitter.run(address, timeout_seconds)
         except UnexpectedStopException:
@@ -94,37 +95,35 @@ class UcWrapJitter(object):
         # checking which instruction you want to emulate: THUMB/THUMB2 or others
         # Note we start at ADDRESS | 1 to indicate THUMB mode.
 
-        # print('!!! [qemu.UcWrapJitter.run] {}:{} pc=0x{:x} end=0x{:x} timeout={}s'
-        #       .format(self.ask_arch,
-        #               self.ask_attrib,
-        #               pc, END_ADDR,
-        #               timeout_seconds))
+        # print(f'!!! [qemu.UcWrapJitter.run] {self.ask_arch}:{self.ask_attrib}'
+        #       f' pc={pc:#x} end={END_ADDR:#x} timeout={timeout_seconds}s')
         try:
+            timeout = int(timeout_seconds * unicorn.UC_SECOND_SCALE)
             if self.ask_arch == 'armt' and self.ask_attrib == 'l':
-                self.mu.emu_start(pc | 1, END_ADDR, int(timeout_seconds * unicorn.UC_SECOND_SCALE))
+                self.mu.emu_start(pc | 1, END_ADDR, timeout)
             else:
-                self.mu.emu_start(pc, END_ADDR, int(timeout_seconds * unicorn.UC_SECOND_SCALE))
+                self.mu.emu_start(pc, END_ADDR, timeout)
             # print('!!! [qemu.UcWrapJitter.run] OK')
             # code = self.mu.mem_read(pc, 96)
-            # print('!!! [qemu.UcWrapJitter.run] code: {}'.format(code.hex()))
+            # print(f'!!! [qemu.UcWrapJitter.run] code: {code.hex()}')
             # mode = CS_MODE_THUMB
             # mode = CS_MODE_ARM
             # md = Cs(CS_ARCH_ARM, mode)
             # for i in md.disasm(code, pc):
-            #     print('0x{:x}:\t{}\t{}'.format(i.address, i.mnemonic, i.op_str))
+            #     print(f'{i.address:#x}:\t{i.mnemonic}\t{i.op_str}')
 
-        except unicorn.UcError:
-            # print('!!! [qemu.UcWrapJitter.run] {}'.format(str(e)))
+        except unicorn.UcError:  # as e:
+            # print(f'!!! [qemu.UcWrapJitter.run] {e}')
             cur_pc = getattr(self.cpu, self.ira.pc.name)
             if cur_pc != END_ADDR:
-                # print('!!! [qemu.UcWrapJitter.run] 0x{:x} != 0x{:x}'.format(cur_pc, END_ADDR))
+                # print(f'!!! [qemu.UcWrapJitter.run] {cur_pc:#x} != {END_ADDR:#x}')
                 # code = self.mu.mem_read(pc, 96)
-                # print('!!! [qemu.UcWrapJitter.run] code: {}'.format(code.hex()))
+                # print(f'!!! [qemu.UcWrapJitter.run] code: {code.hex()}')
                 # mode = CS_MODE_THUMB
                 # #mode = CS_MODE_ARM
                 # md = Cs(CS_ARCH_ARM, mode)
                 # for i in md.disasm(code, pc):
-                #     print('0x{:x}:\t{}\t{}'.format(i.address, i.mnemonic, i.op_str))
+                #     print(f'{i.address:#x}:\t{i.mnemonic}\t{i.op_str}')
                 raise UnexpectedStopException()
         finally:
             self.mu.emu_stop()
@@ -154,8 +153,8 @@ class UcWrapVM(object):
         size = len(item_str)
         size = (size + 0xfff) & ~0xfff
 
-        # print('!!! [qemu.UcWrapVM.add_memory_page] 0x{:x} {} {}... "{}" 0x{:x}'
-        #       .format(addr, access, item_str[:16].hex(), name, size))
+        # print(f'!!! [qemu.UcWrapVM.add_memory_page] {addr:#x} {access} {item_str[:16].hex()}...'
+        #       f' "{name}" {size:#x}')
 
         for page in self.mem_page:
             if page["addr"] <= addr < page["addr"] + page["size"]:
@@ -217,10 +216,10 @@ class UcWrapVM(object):
 
             page_size = page['size']
             frac, _n = math.modf(page_size / 1024)
-            # print('!!! [qemu.Uc.WrapVM.restore_mem_state] 0x{:x} {} size=0x{:x}'
-            #       .format(addr, page['access'], page_size))
+            # print(f'!!! [qemu.Uc.WrapVM.restore_mem_state] {addr:#x} {page["access"]}'
+            #       f' size={page_size:#x}')
             # if frac > 0.0 or int(_n) % 2 == 1:
-            #     print('!!! [qemu.Uc.WrapVM.restore_mem_state] {} {}'.format(frac, _n))
+            #     print(f'!!! [qemu.Uc.WrapVM.restore_mem_state] {frac} {_n}')
 
             # Add missing pages
             if addr not in addrs:
@@ -234,8 +233,7 @@ class UcWrapVM(object):
                         n += 1
                     page_size = n * 1024
 
-                # print('!!! [qemu.UcWrapVM.restore_mem_state] 0x{:x} size=0x{:x}'
-                #       .format(addr, page_size))
+                # print('!!! [qemu.UcWrapVM.restore_mem_state] {addr:#x} size={page_size:#x}')
                 self.mu.mem_map(addr, page_size)
                 self.set_mem(addr, page["data"])
                 new_mem_page.append({"addr": addr,

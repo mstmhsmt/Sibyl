@@ -1236,8 +1236,10 @@ class TestBzero(Test):
 TESTS = [TestStrlen, TestStrnicmp, TestStrcpy, TestStrncpy,
          TestStrcat, TestStrncat, TestStrcmp, TestStrchr,
          TestStrrchr, TestStrnlen, TestStrspn, TestStrpbrk,
-         TestStrtok, TestStrsep, TestMemset, TestMemmove,
+         TestStrtok, TestStrsep, TestMemset,
+         # TestMemmove, TestMemcpy,
+         TestMemmoveWeak, TestMemcpyWeak,
          TestStricmp, TestStrrev, TestMemcmp, TestBzero,
-         TestStrncmp, TestMemcpy, TestMemmoveWeak, TestMemcpyWeak]
+         TestStrncmp]
 
 # TESTS = [TestMemset, TestMemmove, TestMemcpy]
