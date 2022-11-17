@@ -10,6 +10,7 @@ from miasm2.jitter.csts import PAGE_READ
 from miasm2.analysis.machine import Machine
 from miasm2.jitter.loader.elf import vm_load_elf
 
+
 class CustomEmulatedSymbExec(EmulatedSymbExec):
     '''New emulator that trap all memory read and write which is needed by the miasm tracer'''
 
@@ -63,7 +64,7 @@ class TracerMiasm(Tracer):
     def read_callback(self, symb_exec, expr_mem):
         '''Read callback that add the read event to the snapshot'''
         addr = int(expr_mem.ptr)
-        size = expr_mem.size / 8
+        size = expr_mem.size // 8
         value = int(symb_exec.cpu.get_mem(addr, size)[::-1].encode("hex"), 16)
 
         self.current_snapshot.add_memory_read(addr, size, value)
@@ -71,7 +72,7 @@ class TracerMiasm(Tracer):
     def write_callback(self, symb_exec, dest, data):
         '''Write callback that add the read event to the snapshot'''
         addr = int(dest.ptr)
-        size = data.size / 8
+        size = data.size // 8
         value = int(data.arg.arg)
 
         self.current_snapshot.add_memory_write(addr, size, value)
@@ -182,5 +183,5 @@ class TracerMiasm(Tracer):
             jitter.init_run(self.main_address)
 
         jitter.continue_run()
-        assert jitter.run == False
+        assert jitter.run is False
         return self.trace

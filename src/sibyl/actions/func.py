@@ -65,7 +65,7 @@ class ActionFunc(Action):
 
         cont = Container.from_stream(open(self.args.filename))
         machine = Machine(architecture)
-        addr_size = machine.ira().pc.size / 4
+        addr_size = machine.ira().pc.size // 4
         fh = FuncHeuristic(cont, machine, self.args.filename)
 
         # Default: force only IDA or GHIDRA if available

@@ -149,7 +149,7 @@ class Test(object):
         return mod_size2int[int_size](element)
 
     def _memread_pointer(self, addr):
-        pointer_size = math.floor(self.abi.ira.sizeof_pointer() / 8)
+        pointer_size = self.abi.ira.sizeof_pointer() // 8
         try:
             element = self.jitter.vm.get_mem(addr, pointer_size)
         except RuntimeError:
@@ -164,9 +164,9 @@ class Test(object):
             # print('!!! [test.Test.pack] {}'.format(element % 0x100))
             out.append(element % 0x100)
             element >>= 8
-        if len(out) > int(size / 8):
+        if len(out) > size // 8:
             raise ValueError("To big to be packed")
-        for _ in range(int(size / 8) - len(out)):
+        for _ in range(size // 8 - len(out)):
             out.append(0)
         out_ = bytes(out)
         # print('!!! [test.Test.pack] 0x{:x}({}) -> {}'.format(orig_element, size, out_.hex()))

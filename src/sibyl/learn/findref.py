@@ -3,7 +3,9 @@ import logging
 
 from miasm2.jitter.loader.elf import vm_load_elf
 from miasm2.analysis.machine import Machine
-from miasm2.jitter.csts import PAGE_READ, PAGE_WRITE, EXCEPT_ACCESS_VIOL, EXCEPT_DIV_BY_ZERO, EXCEPT_PRIV_INSN
+from miasm2.jitter.csts import (PAGE_READ,
+                                # PAGE_WRITE,
+                                EXCEPT_ACCESS_VIOL, EXCEPT_DIV_BY_ZERO, EXCEPT_PRIV_INSN)
 from miasm2.core.bin_stream import bin_stream_vm
 from miasm2.analysis.dse import ESETrackModif
 import miasm2.expression.expression as m2_expr
@@ -103,7 +105,7 @@ class ExtractRef(object):
             return m2_expr.ExprId(abi_order[arg_number], size)
         else:
             destack = (arg_number - len(abi_order) + 1)
-            return m2_expr.ExprMem(sp + m2_expr.ExprInt(destack * size / 8,
+            return m2_expr.ExprMem(sp + m2_expr.ExprInt(destack * size // 8,
                                                         size),
                                    size)
 
@@ -147,7 +149,7 @@ class ExtractRef(object):
 
                         # Rebuild the corresponding expression
                         if consider:
-                            assert len(new_expr) == expr.size / 8
+                            assert len(new_expr) == expr.size // 8
                             to_replace[expr] = m2_expr.ExprCompose(*new_expr)
 
                     if expr not in self.memories_write:

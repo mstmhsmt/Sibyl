@@ -172,7 +172,7 @@ class PythonGenerator(Generator):
         for dst, value in memories.items():
             assert isinstance(dst, ExprMem)
             addr_expr = dst.ptr
-            for i in range(dst.size / 8):
+            for i in range(dst.size // 8):
                 # Split in atomic access
                 offset = ExprInt(i, addr_expr.size)
                 sub_addr_expr = expr_simp(addr_expr + offset)
@@ -203,7 +203,7 @@ class PythonGenerator(Generator):
             assert isinstance(dst, ExprMem)
             accumulator = []
             addr_expr = dst.ptr
-            for i in reversed(range(dst.size / 8)):
+            for i in reversed(range(dst.size // 8)):
                 # Split in atomic access
                 offset = ExprInt(i, addr_expr.size)
                 sub_addr_expr = expr_simp(addr_expr + offset)
@@ -310,7 +310,7 @@ class PythonGenerator(Generator):
                 # Must be a pointer to be deref
                 assert objc_is_dereferenceable(expr_type)
 
-                assert expr_type.objtype.size >= (expr.size / 8)
+                assert expr_type.objtype.size >= (expr.size // 8)
 
                 info = {"Clike": info_C[0],
                         "addr": addr_expr,

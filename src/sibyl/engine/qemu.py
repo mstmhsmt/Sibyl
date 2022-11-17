@@ -83,12 +83,12 @@ class UcWrapJitter(object):
 
     def push_uint32_t(self, value):
         setattr(self.cpu, self.ira.sp.name,
-                getattr(self.cpu, self.ira.sp.name) - self.ira.sp.size / 8)
+                getattr(self.cpu, self.ira.sp.name) - self.ira.sp.size // 8)
         self.vm.set_mem(getattr(self.cpu, self.ira.sp.name), pck32(value))
 
     def push_uint64_t(self, value):
         setattr(self.cpu, self.ira.sp.name,
-                getattr(self.cpu, self.ira.sp.name) - self.ira.sp.size / 8)
+                getattr(self.cpu, self.ira.sp.name) - self.ira.sp.size // 8)
         self.vm.set_mem(getattr(self.cpu, self.ira.sp.name), pck64(value))
 
     def run(self, pc, timeout_seconds=1):
@@ -215,7 +215,7 @@ class UcWrapVM(object):
         for addr, page in mem_state.items():
 
             page_size = page['size']
-            frac, _n = math.modf(page_size / 1024)
+            frac, _n = math.modf(page_size // 1024)
             # print(f'!!! [qemu.Uc.WrapVM.restore_mem_state] {addr:#x} {page["access"]}'
             #       f' size={page_size:#x}')
             # if frac > 0.0 or int(_n) % 2 == 1:
@@ -224,7 +224,7 @@ class UcWrapVM(object):
             # Add missing pages
             if addr not in addrs:
                 page_size = page['size']
-                frac, _n = math.modf(page_size / 1024)
+                frac, _n = math.modf(page_size // 1024)
                 if frac > 0.0:
                     n = int(_n)
                     if n % 2 == 0:
