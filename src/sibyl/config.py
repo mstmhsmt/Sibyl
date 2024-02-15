@@ -88,7 +88,7 @@ class Config(object):
 
     def parse_files(self, files):
         """Load configuration from @files (which could not exist)"""
-        cparser = configparser.SafeConfigParser()
+        cparser = configparser.ConfigParser()
         cparser.read(files)
 
         # config = {}
